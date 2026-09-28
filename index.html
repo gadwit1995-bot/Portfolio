@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <title>ชำนาญวิทย์ คำนวนศักดิ์ | Project Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { 
+      box-sizing: border-box; 
+      -webkit-tap-highlight-color: transparent;
+    }
+    html { 
+      scroll-behavior: smooth; 
+      -webkit-text-size-adjust: 100%;
+    }
+    body { 
+      font-family: 'Prompt', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      margin: 0; 
+      touch-action: manipulation;
+    }
+
+    /* iOS Sticky Support */
+    .sticky-header {
+      position: -webkit-sticky !important;
+      position: sticky !important;
+      top: 0;
+      z-index: 50;
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+    }
+
+    /* Desktop View (> 1024px): สไลด์แนวนอน 4 หน้าจอ */
+    @media (min-width: 1025px) {
+      body { overflow: hidden; height: 100vh; height: 100dvh; }
+      #appW { height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+      #mainBox { 
+        display: flex; 
+        overflow-x: auto; 
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory; 
+        scroll-behavior: smooth; 
+        height: calc(100vh - 72px); 
+        height: calc(100dvh - 72px); 
+        width: 100vw; 
+        -webkit-overflow-scrolling: touch;
+      }
+      .p-item { 
+        flex: 0 0 100vw; 
+        width: 100vw; 
+        height: 100%; 
+        scroll-snap-align: start; 
+        overflow-y: auto; 
+        -webkit-overflow-scrolling: touch;
+      }
+      #mainBox::-webkit-scrollbar { height: 6px; }
+      #mainBox::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+      .p-item::-webkit-scrollbar { width: 6px; }
+      .p-item::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+      .p-item::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    }
+
+            /* Mobile & Tablet View (<= 1024px): แนวตั้ง เลื่อนขึ้นลงลื่นไหลบน iOS Safari 100% */
+    @media (max-width: 1024px) {
+      html, body { 
+        overflow-y: auto !important; 
+        overflow-x: hidden !important; 
+        height: auto !important; 
+        min-height: 100vh;
+        min-height: 100dvh;
+        -webkit-overflow-scrolling: touch;
+      }
+      #appW { 
+        height: auto !important; 
+        min-height: 100vh; 
+        min-height: 100dvh; 
+        overflow: visible !important; 
+        display: block !important; 
+        width: 100% !important;
+      }
+      /* ปัญหาที่ 1: ให้ Header และ Tab บาร์ ลอยติดขอบบน เลื่อนตามลงมาตลอดเวลา */
+      header, .sticky-header {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        z-index: 50 !important;
+        background-color: rgba(255, 255, 255, 0.98) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        backdrop-filter: blur(16px) !important;
+        box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.06) !important;
+      }
+      /* ปัญหาที่ 2: ตัดพื้นที่ว่างสีขาวด้านบนออก ให้เนื้อหาเริ่มต่อจากแท็บทันที */
+      #mainBox { 
+        display: block !important; 
+        width: 100% !important; 
+        height: auto !important; 
+        overflow: visible !important; 
+        padding-top: 92px !important; /* เว้นที่พอดีกับขนาด Header 90px ไม่เหลือที่ว่าง */
+      }
+      #p0 {
+        display: block !important;
+        padding-top: 10px !important; /* เริ่มเนื้อหาชิดด้านบน ไม่เว้นที่ว่างตามรูปที่ 2 */
+        padding-bottom: 24px !important;
+      }
+      #p0 > div {
+        display: block !important;
+      }
+      .p-item { 
+        display: block !important;
+        width: 100% !important; 
+        height: auto !important; 
+        min-height: auto !important;
+        overflow: visible !important; 
+        border-bottom: 8px solid #f8fafc; 
+        padding: 20px 16px 28px !important; 
+        -webkit-overflow-scrolling: touch;
+      }
+    }
+
+    /* Active Tab Style */
+    .t-act { 
+      background-color: #0f172a !important; 
+      color: #ffffff !important; 
+      font-weight: 600 !important; 
+    }
+    
+    /* Touch target and clickable cursor */
+    .touch-btn {
+      touch-action: manipulation;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Modal Backdrop Blur for WebKit */
+    .ios-blur {
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+    }
+
+    /* Hide scrollbars */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-white text-slate-800 antialiased selection:bg-emerald-100 selection:text-emerald-900">
+<div id="appW" class="w-full h-screen flex flex-col bg-white">
+  
+        <!-- Header Bar: ติดอยู่ด้านบนทั้งในคอมพิวเตอร์และมือถือ -->
+  <header class="sticky-header bg-white/95 border-b border-slate-200 shrink-0">
+    <div class="h-[50px] lg:h-[72px] px-3.5 md:px-8 flex items-center justify-between">
+      
+      <!-- โลโก้และชื่อ -->
+      <div class="flex items-center space-x-3 md:space-x-6">
+        <div class="flex items-center space-x-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <h1 class="font-bold text-slate-900 text-sm md:text-lg">ชำนาญวิทย์ คำนวนศักดิ์</h1>
+          <span class="text-[10px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full md:hidden">PM</span>
+        </div>
+        
+        <!-- Desktop Nav Tabs (แสดงบนจอคอมพิวเตอร์) -->
+        <nav class="hidden lg:flex space-x-1 bg-slate-100 p-1.5 rounded-xl text-xs">
+          <button onclick="jump(0)" class="tab-btn-0 t-btn t-act px-3.5 py-1.5 rounded-lg text-slate-700 transition">โปรไฟล์</button>
+          <button onclick="jump(1)" class="tab-btn-1 t-btn px-3.5 py-1.5 rounded-lg text-slate-600 transition">ประวัติและการศึกษา</button>
+          <button onclick="jump(2)" class="tab-btn-2 t-btn px-3.5 py-1.5 rounded-lg text-slate-600 transition">Tools & Templates</button>
+          <button onclick="jump(3)" class="tab-btn-3 t-btn px-3.5 py-1.5 rounded-lg text-slate-600 transition">ผลงาน</button>
+        </nav>
+      </div>
+
+      <!-- Desktop Contact Info (แสดงบนจอคอมพิวเตอร์) -->
+      <div class="hidden lg:flex flex-col items-end justify-center text-xs text-slate-600 bg-slate-50/90 border border-slate-200 px-3.5 py-1.5 rounded-xl shadow-xs">
+        <div class="flex items-center gap-3">
+          <a href="tel:0988291300" class="hover:text-emerald-700 transition flex items-center gap-1.5 text-slate-700">
+            <span>📞</span> <span class="font-medium text-slate-500">โทร:</span> <strong class="font-semibold text-slate-900">098-829-1300</strong>
+          </a>
+          <span class="text-slate-300">|</span>
+          <a href="mailto:gad.wit1995@gmail.com" class="hover:text-emerald-700 transition flex items-center gap-1.5 text-slate-700">
+            <span>✉️</span> <span class="font-medium text-slate-500">อีเมล:</span> <strong class="font-semibold text-slate-900">gad.wit1995@gmail.com</strong>
+          </a>
+        </div>
+        <div class="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1">
+          <span>📍</span> <span class="font-medium text-slate-500">ที่อยู่:</span> <span class="text-slate-700">9/463 ถ.ลาดปลาเค้า ซอย 78 แขวงอนุสาวรีย์ เขตบางเขน กทม. 10220</span>
+        </div>
+      </div>
+
+      <!-- Mobile Quick Actions: ปุ่มโทรและส่งอีเมลแบบด่วนในมือถือ -->
+      <div class="flex items-center gap-2 lg:hidden">
+        <a href="tel:0988291300" class="p-2 rounded-xl bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 transition flex items-center text-xs font-semibold gap-1" title="โทรหาคุณชำนาญวิทย์">
+          <span>📞</span> <span class="text-[11px] hidden sm:inline">โทร</span>
+        </a>
+        <a href="mailto:gad.wit1995@gmail.com" class="p-2 rounded-xl bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 transition flex items-center text-xs font-semibold gap-1" title="ส่งอีเมล">
+          <span>✉️</span> <span class="text-[11px] hidden sm:inline">อีเมล</span>
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Mobile Sub-Nav Bar: แถบแท็บเลื่อนแนวนอนสำหรับมือถือ ช่วยกระโดดไปยังส่วนต่าง ๆ ได้ทันที -->
+    <div class="lg:hidden px-3 pb-2 pt-0.5 border-t border-slate-100">
+      <nav id="mobileNav" class="flex space-x-1.5 overflow-x-auto no-scrollbar bg-slate-100/90 p-1 rounded-xl text-xs">
+        <button onclick="jump(0)" class="tab-btn-0 t-btn t-act px-3 py-1.5 rounded-lg text-slate-700 transition whitespace-nowrap shrink-0">โปรไฟล์</button>
+        <button onclick="jump(1)" class="tab-btn-1 t-btn px-3 py-1.5 rounded-lg text-slate-600 transition whitespace-nowrap shrink-0">ประวัติและการศึกษา</button>
+        <button onclick="jump(2)" class="tab-btn-2 t-btn px-3 py-1.5 rounded-lg text-slate-600 transition whitespace-nowrap shrink-0">Tools & Templates</button>
+        <button onclick="jump(3)" class="tab-btn-3 t-btn px-3 py-1.5 rounded-lg text-slate-600 transition whitespace-nowrap shrink-0">ผลงาน</button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="mainBox">
+    <!-- PANEL 1: โปรไฟล์ + ความเชี่ยวชาญ + รูปตัวเอง (ไม่มีระบบ Lightbox) -->
+    <!-- PANEL 1: โปรไฟล์ พอดีหน้าจอ 100% ไม่ต้องเลื่อนสกอร์บาร์ -->
+        <!-- PANEL 1: ข้อมูลส่วนตัว / โปรไฟล์ (จัดเต็มหน้ากระดาษ พอดี 100% Viewport ไม่ต้องเลื่อนลง) -->
+        <!-- PANEL 1: ข้อมูลส่วนตัว / โปรไฟล์ (รูปแบบเดิม ข้อมูลครบถ้วน ขนาดภาพใหญ่ตามที่ผู้ใช้ชอบ) -->
+        <!-- PANEL 1: ข้อมูลส่วนตัว / โปรไฟล์ (ย้ายข้อมูลติดต่อขึ้น Tab ด้านบนตามสั่ง คงขนาดข้อมูลและรูปภาพแบบเดิม) -->
+        <!-- PANEL 1: ข้อมูลส่วนตัว / โปรไฟล์ (รองรับทั้งมือถือและคอมพิวเตอร์) -->
+    <section id="p0" class="p-item p-4 sm:p-6 md:p-10 lg:p-14 block lg:flex items-center justify-center bg-white border-r border-slate-100">
+      <div class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-center">
+        
+        <!-- ฝั่งซ้าย (บนมือถือจะแสดงข้อมูลตัวตนก่อน): ข้อมูลโปรไฟล์ + ปุ่ม + ทักษะวิชาชีพ + ซอฟต์แวร์ (Col-span 7) -->
+        <div class="lg:col-span-7 space-y-4">
+          
+          <div>
+            <span class="text-[11px] font-bold text-slate-400 tracking-wider uppercase mb-1 block">01 / PROFILE OVERVIEW</span>
+            <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">Project Manager</h2>
+            <h3 class="text-lg sm:text-xl md:text-2xl font-bold text-slate-800 mt-1">ชำนาญวิทย์ คำนวนศักดิ์</h3>
+          </div>
+
+          <p class="text-slate-600 text-sm md:text-base leading-relaxed font-light">
+            มีประสบการณ์ด้านการจัดการโครงการตั้งแต่เริ่มกระบวนการไปจนส่งมอบงาน (End-to-End) โดยการทำงานส่วนใหญ่เป็นการทำงานร่วมกับผู้มีส่วนได้ส่วนเสียในพื้นที่ ทั้งภาคเอกชน ภาครัฐ และคนในพื้นที่ (Multi-Stakeholder) รวมถึงมีการทำงานด้านรวบรวมข้อมูลเพื่อสนับสนุนการทำงานเชิงพื้นที่ (Data Analysis)
+          </p>
+
+          <!-- กล่องข้อมูลติดต่อสำหรับหน้าจอมือถือ/แท็บเล็ต (มีปุ่มกดโทรและส่งอีเมลได้ทันที) -->
+          <div class="lg:hidden p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-700 flex flex-col gap-2 shadow-2xs">
+            <div class="flex items-center justify-between">
+              <a href="tel:0988291300" class="flex items-center gap-1.5 font-semibold text-emerald-800 hover:text-emerald-950">
+                <span>📞</span> โทร: 098-829-1300
+              </a>
+              <a href="mailto:gad.wit1995@gmail.com" class="flex items-center gap-1.5 font-semibold text-indigo-800 hover:text-indigo-950">
+                <span>✉️</span> ส่งอีเมล
+              </a>
+            </div>
+            <div class="text-[11px] text-slate-500 flex items-center gap-1">
+              <span>📍</span> ที่อยู่: 9/463 ถ.ลาดปลาเค้า ซอย 78 แขวงอนุสาวรีย์ เขตบางเขน กทม. 10220
+            </div>
+          </div>
+
+          <!-- ปุ่มดาวน์โหลดเอกสาร Resume และ Portfolio (PDF) ปรับให้กดง่ายบนหน้าจอมือถือ -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1">
+            <a href="Resume.pdf" download="Resume.pdf" target="_blank" rel="noopener noreferrer" class="inline-flex justify-center items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs md:text-sm font-semibold transition shadow-sm hover:shadow active:scale-95 text-center">
+              <span>📄</span> ดาวน์โหลด Resume
+            </a>
+            <a href="Portfolio.pdf" download="Portfolio.pdf" target="_blank" rel="noopener noreferrer" class="inline-flex justify-center items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs md:text-sm font-semibold transition shadow-sm hover:shadow active:scale-95 text-center">
+              <span>📑</span> ดาวน์โหลด Portfolio (PDF)
+            </a>
+          </div>
+
+          <!-- รูปถ่ายโปรไฟล์บนมือถือ (จะแสดงระหว่างข้อมูลเบื้องต้นกับทักษะ) -->
+          <div class="lg:hidden flex justify-center items-center py-2">
+            <div class="w-full max-w-[240px] aspect-[3/4] rounded-3xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md flex items-center justify-center">
+              <img src="profile.jpg" alt="ชำนาญวิทย์ คำนวนศักดิ์" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=\'p-6 text-center text-slate-400 flex flex-col items-center justify-center h-full w-full\'><span class=\'text-6xl mb-2\'>👤</span><p class=\'font-bold text-slate-700 text-base\'>ชำนาญวิทย์ คำนวนศักดิ์</p><p class=\'text-xs text-slate-400 mt-1\'>[วางไฟล์ profile.jpg ในโฟลเดอร์นี้]</p></div>'"/>
+            </div>
+          </div>
+
+          <!-- ความเชี่ยวชาญในวิชาชีพ: การ์ดเรียงซ้อนแบบเต็มพื้นที่ อ่านง่าย ชัดเจน -->
+          <div class="pt-2">
+            <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-2.5 text-emerald-800">★ ความเชี่ยวชาญในวิชาชีพ</h4>
+            <div class="space-y-2.5">
+              <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                <h5 class="text-xs md:text-sm font-bold text-slate-900">การเจรจาต่อรองกับผู้เกี่ยวข้อง (Stakeholder Management)</h5>
+                <p class="text-xs md:text-sm text-slate-600 font-light mt-1 leading-relaxed">
+                  บริหารความคาดหวังและสร้างความร่วมมือระหว่างทีมงานข้ามสายงาน (Cross-functional teams) และหน่วยงานท้องถิ่น เพื่อแก้ไขปัญหาเฉพาะหน้าและผลักดันโครงการให้ดำเนินไปอย่างราบรื่น
+                </p>
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                <h5 class="text-xs md:text-sm font-bold text-slate-900">การบริหารโครงการ (Project Management)</h5>
+                <p class="text-xs md:text-sm text-slate-600 font-light mt-1 leading-relaxed">
+                  บริหารจัดการโครงการแบบ End-to-End ตั้งรับบรีฟจากลูกค้าเพื่อค้นหาไอเดีย ควบคุมไทม์ไลน์ (Timeline) บริหารงบประมาณ (Budget Control) และจัดสรรทรัพยากรบุคคลให้เป็นไปตามเป้าหมายของลูกค้าและส่งมอบให้ตรงตามระยะเวลาและข้อตกลงที่มีร่วมกัน
+                </p>
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                <h5 class="text-xs md:text-sm font-bold text-slate-900">การวิเคราะห์ข้อมูล (Data-Driven Decision Making)</h5>
+                <p class="text-xs md:text-sm text-slate-600 font-light mt-1 leading-relaxed">
+                  การค้นหา บันทึก และนำข้อมูลมาวิเคราะห์ ทั้งในเชิงของการทำงานเพื่อค้นหา insight หรือการพัฒนาการบริหารทรัพยากรของทีม เพื่อช่วยในการตัดสินใจให้มีประสิทธิภาพมากขึ้น
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ความเชี่ยวชาญด้านโปรแกรมในวิชาชีพ (TECHNICAL SOFTWARE SKILLS) -->
+          <div class="pt-2">
+            <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-2.5 text-indigo-900 flex items-center gap-1.5">
+              <span>💻</span> ความเชี่ยวชาญด้านโปรแกรมในวิชาชีพ (TECHNICAL SOFTWARE SKILLS)
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              
+              <!-- ระดับชำนาญ (Advanced) -->
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">ระดับชำนาญ (Advanced)</span>
+                  <span class="text-emerald-600 text-xs font-bold">●●●</span>
+                </div>
+                <ul class="text-xs md:text-sm text-slate-800 font-medium space-y-1">
+                  <li class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>MS Excel / Google Sheets</li>
+                </ul>
+              </div>
+
+              <!-- ใช้งานได้ดี (Proficient) -->
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-[10px] font-bold text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded">ใช้งานได้ดี (Proficient)</span>
+                  <span class="text-indigo-600 text-xs font-bold">●●○</span>
+                </div>
+                <ul class="text-xs md:text-sm text-slate-800 font-medium space-y-1">
+                  <li class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>MS Office / Google Workspace</li>
+                  <li class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>Gemini AI</li>
+                </ul>
+              </div>
+
+              <!-- ระดับพื้นฐาน (Intermediate) -->
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-[10px] font-bold text-slate-700 bg-slate-200 px-2 py-0.5 rounded">ระดับพื้นฐาน (Intermediate)</span>
+                  <span class="text-slate-500 text-xs font-bold">●○○</span>
+                </div>
+                <ul class="text-xs md:text-sm text-slate-800 font-medium space-y-1">
+                  <li class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Microsoft Project</li>
+                  <li class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>Canva (Presentation)</li>
+                </ul>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ฝั่งขวา (เฉพาะบนหน้าจอคอมพิวเตอร์): รูปถ่ายโปรไฟล์ขนาดใหญ่ สมส่วน สวยงาม (Col-span 5) -->
+        <div class="hidden lg:flex lg:col-span-5 justify-center items-center">
+          <div class="w-full max-w-md aspect-[3/4] rounded-3xl overflow-hidden bg-slate-100 border border-slate-200 shadow-md flex items-center justify-center">
+            <img src="profile.jpg" alt="ชำนาญวิทย์ คำนวนศักดิ์" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=\'p-8 text-center text-slate-400 flex flex-col items-center justify-center h-full w-full\'><span class=\'text-7xl mb-3\'>👤</span><p class=\'font-bold text-slate-700 text-lg\'>ชำนาญวิทย์ คำนวนศักดิ์</p><p class=\'text-xs text-slate-400 mt-1\'>[วางไฟล์ profile.jpg ในโฟลเดอร์นี้]</p></div>'"/>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- PANEL 2: ประวัติการทำงานและการศึกษา -->
+    <section id="p1" class="p-item p-6 md:p-12 lg:p-16 flex items-center justify-center bg-slate-50/60 border-r border-slate-100">
+      <div class="w-full max-w-7xl mx-auto">
+        <span class="text-xs font-bold text-slate-400 tracking-wider uppercase mb-1 block">02 / BACKGROUND & CAREER</span>
+        <h3 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-8">ประวัติการทำงานและการศึกษา</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <div class="lg:col-span-7 space-y-6">
+            <h4 class="text-lg font-bold text-slate-900 pb-2 border-b border-slate-200">ประสบการณ์ทำงาน (Working Experience)</h4>
+            <div class="space-y-6">
+              <div class="border-l-4 border-emerald-500 pl-5">
+                <span class="text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full">2026 - ปัจจุบัน</span>
+                <h5 class="text-xl font-bold text-slate-900 mt-2">ผู้ช่วยผู้จัดการโครงการฝ่ายพัฒนาเมือง (Co-Project Manager)</h5>
+                <p class="text-base font-semibold text-slate-700">ทีมเวิร์ค คอนซัลแทนต์ (Teamwork Consultant)</p>
+                <ul class="text-sm text-slate-600 mt-2 space-y-1 list-disc list-inside font-light">
+                  <li>ติดต่อประสานงานหน่วยงานท้องถิ่นและวางแผนบริหารทีมในการจัดการโครงการ</li>
+                  <li>ช่วยวิเคราะห์ข้อมูลและจัดทำเอกสารรายงานนำเสนอผลลัพธ์</li>
+                  <li>ตรวจสัญญาจ้างงานเพื่อให้สามารถทำงานภายใต้ขอบเขตงานตาม TOR ที่กำหนด</li>
+                  <li>ทำพรีเซนต์และนำเสนอผลลัพธ์กับหน่วยงานที่เกี่ยวข้อง</li>
+                </ul>
+              </div>
+              <div class="border-l-4 border-slate-300 pl-5">
+                <span class="text-xs font-semibold text-slate-700 bg-slate-200 px-3 py-1 rounded-full">2023 - 2025</span>
+                <h5 class="text-xl font-bold text-slate-900 mt-2">ผู้จัดการโครงการพัฒนากลยุทธ์และสร้างเครือข่าย (Project Manager)</h5>
+                <p class="text-base font-semibold text-slate-700">ศูนย์มิตรเมือง (Urban Ally)</p>
+                <ul class="text-sm text-slate-600 mt-2 space-y-1 list-disc list-inside font-light">
+                  <li>บริหารจัดการโครงการทั้งระยะเวลาการทำงานและงบประมาณของโครงการ</li>
+                  <li>ติดต่อประสานงานหน่วยงานที่เกี่ยวข้องรวมถึงทีมงานภายในองค์กร</li>
+                  <li>พูดคุยหาข้อตกลงร่วมกันระหว่างผู้มีส่วนได้ส่วนเสียในการจัดทำโครงการ</li>
+                  <li>จัดทำรายงานนำเสนอเพื่อสร้างความเข้าใจที่ตรงกันในทุกกลุ่ม</li>
+                </ul>
+              </div>
+              <div class="border-l-4 border-slate-200 pl-5">
+                <span class="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1 rounded-full">2021 - 2023</span>
+                <h5 class="text-lg font-bold text-slate-800 mt-2">ผู้ช่วยวิจัย (Research Assistant)</h5>
+                <p class="text-base font-medium text-slate-600">ศูนย์มิตรเมือง (Urban Ally)</p>
+                <p class="text-sm text-slate-500 mt-1 font-light">รวบรวมและวิเคราะห์ข้อมูลเพื่อค้นหาปัญหาและทิศทางพัฒนาในอนาคต</p>
+              </div>
+            </div>
+          </div>
+          <div class="lg:col-span-5 space-y-5">
+            <h4 class="text-lg font-bold text-slate-900 pb-2 border-b border-slate-200">ประวัติการศึกษา (Education)</h4>
+            <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+              <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded">2022</span>
+              <h6 class="text-base font-bold text-slate-900 mt-1.5">ปริญญาโท คณะสถาปัตยกรรมศาสตร์</h6>
+              <p class="text-sm text-slate-600">สาขาการออกแบบชุมชนเมือง มหาวิทยาลัยศิลปากร</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+              <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded">2017</span>
+              <h6 class="text-base font-bold text-slate-900 mt-1.5">ปริญญาตรี คณะสถาปัตยกรรมศาสตร์ (หลักสูตร 4 ปี)</h6>
+              <p class="text-sm text-slate-600">วิทยาศาสตรบัณฑิต มหาวิทยาลัยเชียงใหม่</p>
+            </div>
+            <div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+              <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded">2017</span>
+              <h6 class="text-base font-bold text-slate-900 mt-1.5">มัธยมศึกษา</h6>
+              <p class="text-sm text-slate-600">โรงเรียนบดินทรเดชา (สิงห์ สิงหเสนีย์)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL 3: TOOLS & TEMPLATES (มีระบบ Pop-up และ Lightbox ขยายดูภาพสไลด์) -->
+    <section id="p2" class="p-item p-6 md:p-12 lg:p-14 flex items-center justify-center bg-white border-r border-slate-100">
+      <div class="w-full max-w-7xl mx-auto">
+        <span class="text-xs font-bold text-indigo-600 tracking-wider uppercase mb-1 block">03 / TOOLS & TEMPLATES</span>
+        <h3 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-6">เครื่องมือและเทมเพลตสำหรับบริหารงาน</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5" id="gridTools"></div>
+      </div>
+    </section>
+
+    <!-- PANEL 4: ผลงาน (ปรับโครงสร้างตรงตามภาพที่ 2 เป๊ะ: หัวข้อ ผลงานและโครงการสำคัญ + แท็บฟิลเตอร์ด้านขวา) -->
+    <section id="p3" class="p-item p-6 md:p-12 lg:p-16 flex flex-col justify-start bg-slate-50/70">
+      <div class="w-full max-w-7xl mx-auto py-4">
+        <!-- Header Section 04: วางหัวข้อทางซ้าย และปุ่มตัวกรองทางขวาในแถวเดียวกันตามภาพที่ 2 -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+          <div>
+            <span class="text-xs font-bold text-slate-400 tracking-wider uppercase mb-1 block">04 / SELECTED WORKS</span>
+            <h3 class="text-3xl md:text-4xl font-extrabold text-slate-900">ผลงานและโครงการสำคัญ</h3>
+          </div>
+          <!-- แท็บตัวกรอง: ทั้งหมด (All), Project Manager, Project Owner, Project Coordinator ไม่มีตัวเลขวงเล็บ ตามภาพที่ 2 -->
+          <div class="flex flex-wrap gap-2.5">
+            <button onclick="pickCat('all')" id="c-all" class="c-btn px-4 py-2 rounded-full text-xs font-semibold bg-slate-900 text-white transition shadow-sm">ทั้งหมด (All)</button>
+            <button onclick="pickCat('pm')" id="c-pm" class="c-btn px-4 py-2 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition shadow-sm">Project Manager</button>
+            <button onclick="pickCat('po')" id="c-po" class="c-btn px-4 py-2 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition shadow-sm">Project Owner</button>
+            <button onclick="pickCat('pc')" id="c-pc" class="c-btn px-4 py-2 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition shadow-sm">Project Coordinator</button>
+          </div>
+        </div>
+
+        <!-- Grid ผลงาน 9 รายการ แสดงโครงสร้างการ์ดเหมือนภาพที่ 2 เป๊ะ -->
+        <div id="gridWorks" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Level 1: Modal Detail Popup -->
+<!-- Level 1: Modal Detail Popup (ขนาดใหญ่เกือบเต็มหน้าเว็บตามคำขอ) -->
+<div id="mModal" class="fixed inset-0 bg-slate-900/75 ios-blur hidden items-center justify-center p-3 md:p-6 z-50">
+  <div class="bg-white rounded-3xl max-w-6xl w-full p-5 md:p-8 max-h-[94vh] max-h-[92dvh] overflow-y-auto style="-webkit-overflow-scrolling: touch;" border border-slate-200 shadow-2xl relative flex flex-col">
+    
+    <!-- Modal Header -->
+    <div class="flex justify-between items-start mb-4 pb-3 border-b border-slate-100">
+      <div>
+        <span id="mRole" class="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full uppercase"></span>
+        <h4 id="mTitle" class="text-xl md:text-2xl font-bold text-slate-900 mt-2"></h4>
+      </div>
+      <button onclick="closePop()" class="text-slate-400 hover:text-slate-900 p-2 text-2xl font-bold leading-none cursor-pointer rounded-xl hover:bg-slate-100 transition">✕</button>
+    </div>
+    
+    <!-- กรอบรูปใน Modal: ขนาดใหญ่สะใจ เกือบเต็มหน้าเว็บ แสดงผลแบบ contain ไม่ถูกครอป -->
+    <div class="relative rounded-2xl overflow-hidden mb-5 border border-slate-200 bg-slate-900/5 group flex items-center justify-center p-2 min-h-[360px] md:min-h-[460px]">
+      <div id="mImg" class="w-full flex items-center justify-center max-h-[66vh]"></div>
+      <!-- ปุ่มคลิกขยายเต็มจอ -->
+      <button id="btnZoomFullscreen" onclick="openCurrentInFullscreen()" class="absolute bottom-4 right-4 bg-slate-900/85 hover:bg-slate-900 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-lg backdrop-blur-sm transition flex items-center gap-1.5 cursor-pointer hover:scale-105 active:scale-95">
+        <span>🔍</span> ขยายเต็มจอ (Fullscreen)
+      </button>
+    </div>
+
+    <!-- รายละเอียดข้อมูลใต้ภาพ -->
+    <div id="modalContent" class="space-y-4 text-xs md:text-sm text-slate-700 bg-slate-50 p-4 md:p-5 rounded-2xl border border-slate-200/80"></div>
+  </div>
+</div>
+
+<!-- Level 2: Fullscreen Lightbox (เต็มหน้าจอ 100% สำหรับดูรายละเอียดความละเอียดสูง) -->
+<div id="fsLightbox" class="fixed inset-0 bg-slate-950/95 ios-blur hidden flex-col items-center justify-center p-2 md:p-6 z-[70]" onclick="closeFsLightbox(event)">
+  <div class="absolute top-4 right-4 flex items-center gap-3 z-10">
+    <span id="fsCaption" class="text-white/80 text-xs md:text-sm font-medium mr-2 hidden sm:inline-block"></span>
+    <button onclick="closeFsLightboxDirect()" class="bg-white/10 hover:bg-white/20 text-white rounded-full w-10 h-10 flex items-center justify-center text-xl font-bold cursor-pointer transition">✕</button>
+  </div>
+  <div class="w-full h-full flex items-center justify-center p-2">
+    <img id="fsImg" src="" alt="" class="max-w-[96vw] max-h-[92vh] object-contain rounded-xl shadow-2xl transition-transform duration-300"/>
+  </div>
+</div>
+</div>
+
+
+</div>
+
+<script>
+// สารบัญฐานข้อมูล Tools & Templates (แยกภาพปก coverImg และภาพสไลด์ lightboxImages)
+const toolsDB = {
+  t1: {
+    id: 't1',
+    title: 'Interactive PM Dashboard',
+    cat: 'Google Sheet / Excel',
+    desc: 'Dashboard รวบรวมงานเพื่อติดตามงานและวางแผนงานให้ส่งตามทัน Deadline',
+    usage: 'สร้าง Dashboard การทำงานแบบ Interactive บน google sheet เพื่อติดตามการทำงาน และ ความคืบหน้างาน รวมถึงงานที่มีความจำเป็นเร่งด่วน การเลือกใช้ Google sheet เนื่องจากคนในทีมมีความเข้าใจเครื่องมือมากกว่า รวมถึงมีความยืดหยุ่นมากกว่าที่สามารถปรับใช้เข้ากับปัญหาที่เฉพาะขององค์กรได้',
+    coverImg: 'tool_02_slide_01.jpg',
+    img: 'tool_02_slide_01.jpg',
+    lightboxImages: [
+      { src: 'tool_02_slide_01.jpg', caption: 'Interactive PM Dashboard: ติดตามความก้าวหน้าโครงการภาครัฐตามงวดงานและ Deadline' }
+    ]
+  },
+  t2: {
+    id: 't2',
+    title: 'Workload & Efficiency Gantt Chart + AI Insights',
+    cat: 'Gantt + AI Insights',
+    desc: 'กราฟวัดภาระงานรายบุคคล พร้อม AI วิเคราะห์ข้อเสนอแนะเชิงรุกเพื่อลดโหลดงาน',
+    usage: 'ระบบประเมินภาระงานรายบุคคล จำแนกตามสถานะ (เสร็จสิ้น / กำลังทำตามแผน / ล่าช้า) พร้อมฟังก์ชัน AI Insights แนะนำการจัดสรรงานเพื่อไม่ให้พนักงานคนใดคนหนึ่งโหลดเกินไป',
+    coverImg: 'tool_01_slide_02.jpg',
+    img: 'tool_01_slide_02.jpg',
+    lightboxImages: [
+      { src: 'tool_01_slide_02.jpg', caption: 'Workload & Efficiency Breakdown: กราฟวิเคราะห์ภาระงานรายบุคคล พร้อม AI Actionable Insights' }
+    ]
+  },
+  t3: {
+    id: 't3',
+    title: 'AppSheet ระบบลางานเชื่อม Google Calendar',
+    cat: 'AppSheet & Calendar',
+    desc: 'แอปมือถือยื่นใบลา เชื่อม Google Calendar กลาง ลดปัญหาคนลาพร้อมกันข้ามแผนก',
+    usage: 'พัฒนา Application แจ้งวันลาบน AppSheet เชื่อมต่อกับปฏิทินกลางของออฟฟิศ เพื่อแก้ปัญหาการเขียนใบลาบนกระดาษที่ตกหล่นและไม่มีข้อมูลรวมกลาง ทำให้ PM แต่ละทีมเห็นตารางพนักงานข้ามแผนก และวางแผนงานร่วมกันได้ล่วงหน้า',
+    coverImg: 'tool_03_slide_01.jpg',
+    img: 'tool_03_slide_01.jpg',
+    lightboxImages: [
+      { src: 'tool_03_slide_01.jpg', caption: 'AppSheet & Calendar: หน้าจอแอปพลิเคชันยื่นใบลาบนมือถือและการเชื่อมต่อปฏิทินกลางองค์กร' }
+    ]
+  },
+  t4: {
+    id: 't4',
+    title: 'S-Curve และไทม์ไลน์งานภาครัฐ (MS Project)',
+    cat: 'MS Project / Excel',
+    desc: 'วิเคราะห์ Critical Path โครงการก่อสร้างระยะยาว วางแผนงบประมาณต่องวดงาน',
+    usage: 'วาง Timeline งานโครงการก่อสร้างระยะยาว วิเคราะห์หาจุด Critical Path ที่จำเป็นต้องเสร็จตามกำหนด และสร้างแผนภูมิ S-Curve นำเสนอภาครัฐเพื่อเสนอความคืบหน้าต่องวดงานและควบคุมงบประมาณและเวลาได้แม่นยำตามเกณฑ์ TOR',
+    coverImg: 'tool_04_slide_01.jpg',
+    img: 'tool_04_slide_01.jpg',
+    lightboxImages: [
+      { src: 'tool_04_slide_01.jpg', caption: 'S-Curve & MS Project: การวิเคราะห์ Critical Path งานก่อสร้างระยะยาว และแผนภูมิความคืบหน้างวดงาน' }
+    ]
+  }
+};
+
+const worksDB = [
+  {
+    id: 'w1',
+    cat: 'pm',
+    roleTag: 'Project Manager',
+    title: '1. Bangkok Design Week 2024',
+    desc: 'งานเทศกาลที่ช่วยขับเคลื่อนเมืองให้เกิดการปรับเปลี่ยนสถานที่ให้เกิดความสร้างสรรค์และเกิดประโยชน์ต่อการเป็นพื้นที่สาธารณะต่อเมืองและผู้คน',
+    scope: 'บริหารโครงการตั้งแต่ระยะเริ่มต้น (Kickoff) จัดการวาง Timeline ติดตามงาน ไปจนถึงจบงานเทศกาล โดยมุ่งเน้นการสร้างความร่วมมือระหว่างนักออกแบบรุ่นใหม่และร้านค้าดั้งเดิมในพื้นที่รวมถึงหน่วยงานในพื้นที่',
+    coverImg: 'work_01_slide_01.jpg',
+    img: 'work_01_slide_01.jpg',
+    lightboxImages: [
+      { src: 'work_01_slide_01.jpg', caption: 'สไลด์ที่ 1: บรรยากาศงานเทศกาลและการปรับเปลี่ยนพื้นที่สาธารณะ Bangkok Design Week 2024' },
+      { src: 'work_01_slide_02.jpg', caption: 'สไลด์ที่ 2: สถิติผู้เข้าร่วมงานรวม 42,142 คน จำแนกตามจุดจัดแสดงในย่านพระนคร' }
+    ]
+  },
+  {
+    id: 'w2',
+    cat: 'pm',
+    roleTag: 'Project Manager',
+    title: '2. Made in Phranakorn Bangkok Design Week',
+    desc: 'การสร้างความร่วมมือระหว่างนักออกแบบและร้านค้าในย่าน ในการนำเสนอสินค้าสร้างสรรค์ เพื่อแก้ปัญหา ปัญหาร้านค้าเก่าแก่ที่กำลังจะหายไปจากพื้นที่จากการไม่มีการปรับตัวให้ทันยุคสมัย',
+    scope: 'บริหารโครงการตั้งแต่ระยะเริ่มต้น (Kickoff) จนถึงการจบงาน มีหน้าที่วางไทม์ไลน์งาน ติดตามงาน รวมถึงควบคุมงบประมาณ และประสานงานสร้างความร่วมมือระหว่างนักออกแบบรุ่นใหม่ และคนคนในพื้นที่ เพื่อสร้างความเข้าใจของงานในทิศทางเดียวกัน',
+    coverImg: 'work_02_slide_01.jpg',
+    img: 'work_02_slide_01.jpg',
+    lightboxImages: [
+      { src: 'work_02_slide_01.jpg', caption: 'สไลด์ที่ 1: ผลิตภัณฑ์สร้างสรรค์ Co-creation ร่วมกับร้านค้าดั้งเดิมในย่านพระนคร (ใบชาตรากระต่าย, น้ำอบนางลอย, ร้านเผือกทอด)' },
+      { src: 'work_02_slide_02.jpg', caption: 'สไลด์ที่ 2: เวทีเสวนา BKKDW TALK \'25 และภาพความร่วมมือระหว่างทีมงานกับชุมชน' }
+    ]
+  },
+  {
+    id: 'w3',
+    cat: 'pm',
+    roleTag: 'Project Manager',
+    title: '3. แผนแม่บทการพัฒนาย่านเศรษฐกิจสร้างสรรค์ ย่านเมืองเก่าสงขลา',
+    desc: 'การทำงานร่วมกับ CEA ในการค้นหาแผนงานในอนาคตของย่านเมืองเก่าสงขลา เพื่อกระตุ้นให้เกิดเศรษฐกิจสร้างสรรค์ร่วมกับคนในพื้นที่และท้องถิ่น',
+    scope: 'บริหารโครงการตั้งแต่ระยะเริ่มต้น (Kickoff) จนถึงการจบงาน โดยระยะเวลางาน 1 ปี มีหน้าที่วางไทม์ไลน์งาน แจกจ่ายงาน ติดตามงาน และประสานงานสร้างความร่วมมือระหว่างนักออกแบบรุ่นใหม่ คนในพื้นที่ และภาครัฐท้องถิ่น รวมถึงการรวบรวมและวิเคราะห์ข้อมูลเพื่อหาปัญหา (Data Analysis)',
+    coverImg: 'work_03_slide_01.jpg',
+    img: 'work_03_slide_01.jpg',
+    lightboxImages: [
+      { src: 'work_03_slide_01.jpg', caption: 'สไลด์ที่ 1: การจัด Workshop และกระบวนการมีส่วนร่วมกับคนในพื้นที่ย่านเมืองเก่าสงขลา' },
+      { src: 'work_03_slide_02.jpg', caption: 'สไลด์ที่ 2: Data Analysis แนวโน้มการจัดเทศกาลและการขยายตัวของธุรกิจสร้างสรรค์' }
+    ]
+  },
+  {
+    id: 'w4',
+    cat: 'pc',
+    roleTag: 'Project Coordinator',
+    title: '4. มาแต่ตรัง Trang Renown',
+    desc: 'งานเทศกาลที่ช่วยขับเคลื่อนเมืองตรังให้เกิดการปรับเปลี่ยนสถานที่ให้เกิดความสร้างสรรค์และเกิดประโยชน์ต่อการเป็นพื้นที่สาธารณะต่อเมืองและผู้คน',
+    scope: 'ติดต่อประสานงานคนในพื้นที่ หน่วยงานที่เกี่ยวข้องในพื้นที่ รวมถึง Supplier ต่าง ๆ ที่มีส่วนทั้งหมดในการจัดงาน เพื่อให้เกิดความราบลื่น และติดตามงานให้ทันตามกำหนดการ',
+    coverImg: 'work_04_cover.jpg',
+    img: 'work_04_cover.jpg',
+    lightboxImages: [
+      { src: 'work_04_cover.jpg', caption: 'ภาพรวมงานเทศกาลมาแต่ตรัง Trang Renown' }
+    ]
+  },
+  {
+    id: 'w5',
+    cat: 'po',
+    roleTag: 'Project Owner',
+    title: '5. การฟื้นฟูย่านรางน้ำด้วยเทศกาล',
+    desc: 'แนวทางการฟื้นฟูย่านรางน้ำด้วยเทศกาล ศึกษาข้อมูลและความเป็นไปได้ พัฒนาอัตลักษณ์ สร้างความร่วมมือกับชุมชน ระยะที่ 1,2 โดย King Power ร่วมกับ เครือข่ายการ พัฒนาย่านรางน้ำอย่างมีส่วนร่วม (Rangnam Social Forum) และเขตราชเทวี ในการก่อตั้งเครือข่ายผลักดันย่านรางน้ำร่วมกัน',
+    scope: 'บริหารโครงการตั้งแต่ระยะเริ่มต้น (Kickoff) จนถึงการจบงาน โดยระยะเวลางาน 2 ปี มีหน้าที่วางไทม์ไลน์งาน แจกจ่ายงาน ติดตามงาน และประสานงานสร้างความร่วมมือระหว่างนักออกแบบรุ่นใหม่ คนในพื้นที่ และภาครัฐท้องถิ่น รวมไปถึงนำเสนอโจทย์ของงานเทศกาลและโปรแกรมที่จะเกิดขึ้น เป็นโปรเจคขนาดกลาง ที่ได้ทำแบบ End to End',
+    coverImg: 'work_05_cover.jpg',
+    img: 'work_05_cover.jpg',
+    lightboxImages: [
+      { src: 'work_05_cover.jpg', caption: 'การฟื้นฟูย่านรางน้ำด้วยเทศกาล (Rangnam Social Forum)' }
+    ]
+  },
+  {
+    id: 'w6',
+    cat: 'po',
+    roleTag: 'Project Owner',
+    title: '6. Rangnam Localicious',
+    desc: 'เทศกาลที่ทำร่วมกับเขตราชเทวี ที่อยากผลักดันถนนรางน้ำให้เกิดเป็นย่านสร้างสรรค์ ผ่านเทศกาล โดยนำเสนอ อัตลักษณ์ภายในย่านที่มี อาหารหลากหลายสัญชาติ นำมาเล่าและจัดกิจกรรม',
+    scope: 'บริหารโครงการตั้งแต่ระยะเริ่มต้น (Kickoff) จนถึงการจบงาน มีหน้าที่วางไทม์ไลน์งาน แจกจ่ายงาน ติดตามงาน และประสานงานสร้างความร่วมมือระหว่างนักออกแบบรุ่นใหม่ คนในพื้นที่ และภาครัฐท้องถิ่น รวมถึงการนำเสนอไอเดียในการจัดเทศกาล และโปรแกรมที่จะเกิดขึ้นในงาน เป็นโปรเจคขนาดกลาง ที่ได้ทำแบบ End to End',
+    coverImg: 'work_06_cover.jpg',
+    img: 'work_06_cover.jpg',
+    lightboxImages: [
+      { src: 'work_06_cover.jpg', caption: 'เทศกาลอาหารและอัตลักษณ์ย่านรางน้ำ Rangnam Localicious' }
+    ]
+  },
+  {
+    id: 'w7',
+    cat: 'po',
+    roleTag: 'Project Owner',
+    title: '7. Line OA สงขลาส่งต่อ Paktaii Design Week',
+    desc: 'Line OA ที่ช่วยให้นักท่องเที่ยวสามารถเข้าถึงร้านค้าต่าง ๆ ในย่านสงขลาเมืองเก่าได้มากขึ้น โดยมีบริการ จุดยืมคืนร่ม จุดบริการรถราง(ทำร่วมกับเทศบาล) และแคมเปญที่ร่วมกับร้านค้าในย่าน',
+    scope: 'บริหารโครงการตั้งแต่ระยะเริ่มต้น (Kickoff) จนถึงการจบงาน มีหน้าที่วางไทม์ไลน์งาน บริหารงบ ติดต่อกับนักออกแบบ รับบรีฟจากลูกค้า วิเคราะห์เพื่อหาปัญหา และนำเสนอแนวทางแก้ปัญหา และนำไปสู่ Product โดยงานนี้เป็นส่วนหนึ่งภายใต้งาน Paktaii Design Week เป็นโปรเจค ขนาดเล็ก ที่มีหน้าที่รับผิดชอบคนเดียว End to End',
+    coverImg: 'work_07_cover.jpg',
+    img: 'work_07_cover.jpg',
+    lightboxImages: [
+      { src: 'work_07_cover.jpg', caption: 'Line OA สงขลาส่งต่อ: แพลตฟอร์มบริการชุมชนและการท่องเที่ยว' }
+    ]
+  },
+  {
+    id: 'w8',
+    cat: 'po',
+    roleTag: 'Project Owner',
+    title: '8. คิดต่อออกแบบ Paktaii Design Week',
+    desc: 'Exhibition Board ที่รวบรวมปัญหา และการแก้ปัญหาของธุรกิจ SME ที่อยู่ภายในย่านเมืองเก่าสงขลา เพื่อสร้างองค์ความรู้ที่ช่วยส่งต่อออกไปให้กับกลุ่มร้านค้าตัวเล็กตัวน้อยในพื้นที่',
+    scope: 'บริหารโครงการตั้งแต่ระยะเริ่มต้น (Kickoff) จนถึงการจบงาน มีหน้าที่วางไทม์ไลน์งาน บริหารงบ ติดต่อกับนักออกแบบ รับบรีฟจากลูกค้า วิเคราะห์เพื่อหาปัญหา และนำเสนอแนวทางแก้ปัญหา และนำไปสู่ Product โดยงานนี้เป็นส่วนหนึ่งภายใต้งาน Paktaii Design Week เป็นโปรเจค ขนาดเล็ก ที่มีหน้าที่รับผิดชอบคนเดียว End to End',
+    coverImg: 'work_08_cover.jpg',
+    img: 'work_08_cover.jpg',
+    lightboxImages: [
+      { src: 'work_08_cover.jpg', caption: 'Exhibition Board คิดต่อออกแบบ: สรุปบทเรียนและแนวทางแก้ปัญหา SME' }
+    ]
+  },
+  {
+    id: 'w9',
+    cat: 'po',
+    roleTag: 'Project Owner',
+    title: '9. Line Chat Bot มาสคอตย่านพระนคร Bangkok Design Week',
+    desc: 'Line Chat Bot เปิดตัวมาสคอตย่านพระนครในงาน Bangkok Design Week ที่มาช่วยนำเสนอกิจกรรมที่มีในย่านพระนครทั้งหมด และช่วยแนะนำที่เที่ยวร้านอาหารภายในย่านสำหรับนักท่องเที่ยว',
+    scope: 'บริหารโครงการตั้งแต่ระยะเริ่มต้น (Kickoff) จนถึงการจบงาน มีหน้าที่วางไทม์ไลน์งาน บริหารงบ ติดต่อกับนักออกแบบ รับบรีฟจากลูกค้า วิเคราะห์เพื่อหาปัญหา และนำเสนอแนวทางแก้ปัญหา และนำไปสู่ Product โดยงานนี้เป็นส่วนหนึ่งภายใต้งาน Bangkok Design Week เป็นโปรเจค ขนาดเล็ก ที่มีหน้าที่รับผิดชอบคนเดียว End to End',
+    coverImg: 'work_09_cover.jpg',
+    img: 'work_09_cover.jpg',
+    lightboxImages: [
+      { src: 'work_09_cover.jpg', caption: 'Line Chat Bot มาสคอตย่านพระนคร: แนะนำเส้นทางท่องเที่ยวและร้านอาหาร' }
+    ]
+  }
+];
+
+// Render Tools
+const gT = document.getElementById('gridTools');
+['t1','t2','t3','t4'].forEach(k => {
+  const t = toolsDB[k];
+  const cover = t.coverImg || t.img;
+  gT.innerHTML += `<div onclick="openToolPop('${k}')" role="button" tabindex="0" class="p-4 rounded-2xl border border-slate-200 bg-slate-50 hover:border-slate-400 transition cursor-pointer flex flex-col justify-between shadow-sm">
+    <div>
+      <div class="h-40 rounded-xl bg-slate-200 flex items-center justify-center text-slate-400 text-xs overflow-hidden mb-3 border border-slate-200">
+        <img src="${cover}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=\'p-3 text-center flex flex-col items-center justify-center h-full\'><span class=\'text-lg mb-1\'>📊</span><span class=\'font-semibold text-slate-700 text-xs\'>${t.title}</span><code class=\'text-[10px] text-emerald-600 font-mono mt-1\'>${cover}</code></div>'"/>
+      </div>
+      <span class="text-[10px] font-bold text-indigo-800 bg-indigo-100 px-2.5 py-1 rounded">${t.cat}</span>
+      <h4 class="font-bold text-slate-900 text-base mt-2">${t.title}</h4>
+      <p class="text-xs text-slate-600 mt-1.5 line-clamp-3 leading-relaxed font-light">${t.desc}</p>
+    </div>
+    <span class="text-xs text-indigo-600 font-semibold mt-3">เปิดดูรายละเอียด &gt;</span>
+  </div>`;
+});
+
+// Render Works: ปรับแต่งให้แสดงผลและ Fallback เหมือนภาพที่ 2 เป๊ะ
+let curCat = 'all';
+
+function drawWorks() {
+  const gW = document.getElementById('gridWorks');
+  gW.innerHTML = '';
+  worksDB.forEach(w => {
+    if (curCat === 'all' || w.cat === curCat) {
+      const cover = w.coverImg || w.img;
+      gW.innerHTML += `<div onclick="openWorkPop('${w.id}')" role="button" tabindex="0" class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition p-5 flex flex-col justify-between cursor-pointer">
+        <div>
+          <!-- กรอบรูปปกด้านบนของการ์ด: แสดงชื่อโปรเจกต์และรหัสไฟล์ cover เมื่อยังไม่ได้ใส่รูปตามภาพที่ 2 -->
+          <div class="h-44 rounded-xl bg-slate-100 flex flex-col items-center justify-center text-slate-400 text-xs overflow-hidden mb-3.5 border border-slate-200">
+            <img src="${cover}" alt="${w.title}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<div class=\'p-3 text-center text-slate-400 flex flex-col items-center justify-center h-full\'><span class=\'text-xs text-slate-700 font-semibold mb-1\'>${w.title.slice(0, 24)}...</span><code class=\'text-[11px] text-emerald-600 font-mono\'>${cover}</code></div>'"/>
+          </div>
+          
+          <span class="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full block w-fit mb-2">${w.roleTag}</span>
+          <h5 class="font-bold text-slate-900 text-base leading-snug mb-3">${w.title}</h5>
+          
+          <div class="space-y-3 pt-3 border-t border-slate-100 text-xs">
+            <div>
+              <strong class="text-slate-900 font-semibold block mb-0.5">รายละเอียดงาน :</strong>
+              <p class="text-slate-600 font-light leading-relaxed line-clamp-3">${w.desc}</p>
+            </div>
+            <div>
+              <strong class="text-slate-900 font-semibold block mb-0.5">Project Scope :</strong>
+              <p class="text-slate-600 font-light leading-relaxed line-clamp-3">${w.scope}</p>
+            </div>
+          </div>
+        </div>
+        
+        
+      </div>`;
+    }
+  });
+}
+drawWorks();
+
+function pickCat(c) {
+  curCat = c;
+  document.querySelectorAll('.c-btn').forEach(b => b.className = 'c-btn px-4 py-2 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 transition shadow-sm');
+  document.getElementById('c-' + c).className = 'c-btn px-4 py-2 rounded-full text-xs font-semibold bg-slate-900 text-white transition shadow-sm';
+  drawWorks();
+}
+
+// Navigation & Tab Sync (รองรับ iOS Safari 100% ทั้งมือถือและเดสก์ท็อป)
+const mBox = document.getElementById('mainBox');
+let isJumping = false;
+
+function jump(i) {
+  isJumping = true;
+  setTab(i);
+  const p = document.getElementById('p' + i);
+  if (!p) return;
+
+  if (window.innerWidth <= 1024) {
+    // สำหรับ iOS Safari: เลื่อนหน้าจอแนวตั้งอย่างแม่นยำ ไม่ถูก Header บัง
+    const headerEl = document.querySelector('header');
+    const headerHeight = headerEl ? headerEl.offsetHeight : 92;
+    const bodyRect = document.body.getBoundingClientRect().top;
+    const elementRect = p.getBoundingClientRect().top;
+    const elementPosition = elementRect - bodyRect;
+    const offsetPosition = Math.max(0, elementPosition - headerHeight - 12);
+
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: 'smooth'
+    });
+
+    // เลื่อนปุ่มแท็บในแถบมือถือให้อยู่ตรงกลาง
+    const mobileNav = document.getElementById('mobileNav');
+    const activeMobileTab = document.querySelector('#mobileNav .tab-btn-' + i);
+    if (mobileNav && activeMobileTab) {
+      const targetScrollLeft = activeMobileTab.offsetLeft - (mobileNav.clientWidth / 2) + (activeMobileTab.clientWidth / 2);
+      mobileNav.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
+    }
+  } else {
+    // สำหรับหน้าจอคอมพิวเตอร์: เลื่อนแนวนอน
+    p.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+  }
+  setTimeout(() => isJumping = false, 850);
+}
+
+function setTab(idx) {
+  for (let i = 0; i < 4; i++) {
+    const btns = document.querySelectorAll('.tab-btn-' + i);
+    btns.forEach(b => {
+      b.className = (i === idx) 
+        ? 'tab-btn-' + i + ' t-btn t-act px-3.5 py-1.5 rounded-lg text-white font-semibold transition shrink-0 touch-btn' 
+        : 'tab-btn-' + i + ' t-btn px-3.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition shrink-0 touch-btn';
+    });
+  }
+}
+
+// อัปเดตแท็บบน Desktop (เลื่อนแนวนอน)
+mBox.addEventListener('scroll', () => {
+  if (window.innerWidth <= 1024 || isJumping) return;
+  if (mBox.scrollLeft + mBox.clientWidth >= mBox.scrollWidth - 80) { setTab(3); return; }
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById('p' + i);
+    if (el && mBox.scrollLeft >= el.offsetLeft - 150 && mBox.scrollLeft < el.offsetLeft + el.offsetWidth - 150) {
+      setTab(i); break;
+    }
+  }
+}, { passive: true });
+
+// อัปเดตแท็บบน iOS / Mobile (เลื่อนแนวตั้ง) - ปรับปรุงไม่ให้หน้าเว็บเด้งกลับขึ้นด้านบน 100%
+window.addEventListener('scroll', () => {
+  if (window.innerWidth > 1024 || isJumping) return;
+  const headerEl = document.querySelector('header');
+  const headerHeight = headerEl ? headerEl.offsetHeight : 92;
+  const scrollY = (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0) + headerHeight + 40;
+
+  for (let i = 3; i >= 0; i--) {
+    const el = document.getElementById('p' + i);
+    if (el && scrollY >= el.offsetTop) {
+      setTab(i);
+      // เลื่อนเฉพาะแถบเมนูในแนวนอน โดยไม่ใช้ scrollIntoView ซึ่งมีบั๊กเด้งหน้าจอบน iOS
+      const mobileNav = document.getElementById('mobileNav');
+      const activeMobileTab = document.querySelector('#mobileNav .tab-btn-' + i);
+      if (mobileNav && activeMobileTab) {
+        const targetScrollLeft = activeMobileTab.offsetLeft - (mobileNav.clientWidth / 2) + (activeMobileTab.clientWidth / 2);
+        mobileNav.scrollTo({ left: targetScrollLeft, behavior: 'smooth' });
+      }
+      break;
+    }
+  }
+}, { passive: true });
+
+// ปรับปรุงการใช้งาน Mouse Wheel บนคอมพิวเตอร์ / Laptop:
+// ในหน้า "ผลงาน" (#p3) และหน้าที่มีเนื้อหาแนวตั้ง ให้เมาส์ Scroll เลื่อนขึ้น-ลงดูเนื้อหาได้อย่างอิสระ
+mBox.addEventListener('wheel', e => {
+  if (window.innerWidth <= 1024) return;
+
+  // ตรวจสอบว่าเมาส์อยู่ในหน้าผลงาน (#p3) หรือไม่
+  const p3 = document.getElementById('p3');
+  const isOverP3 = p3 && (p3.contains(e.target) || e.target.closest('#p3'));
+
+  if (isOverP3) {
+    // ถ้าอยู่ที่บนสุดของหน้าผลงานแล้วเลื่อนเมาส์ขึ้น -> เลื่อนสไลด์กลับไปหน้าก่อนหน้า (Tools & Templates)
+    if (p3.scrollTop <= 0 && e.deltaY < 0) {
+      e.preventDefault();
+      mBox.scrollLeft += e.deltaY;
+      return;
+    }
+    // หากกำลังเลื่อนลง หรือเลื่อนดูการ์ดผลงาน -> ปล่อยให้ Scroll แนวตั้งได้อย่างอิสระ 100%
+    return;
+  }
+
+  // สำหรับหน้าอื่น ๆ: ตรวจสอบว่าแผงนั้นมีเนื้อหาแนวตั้งที่ยังเลื่อนได้หรือไม่
+  const currentPanel = e.target.closest('.p-item');
+  if (currentPanel && currentPanel.scrollHeight > currentPanel.clientHeight + 10) {
+    const canScrollDown = currentPanel.scrollTop + currentPanel.clientHeight < currentPanel.scrollHeight - 5;
+    const canScrollUp = currentPanel.scrollTop > 5;
+
+    if ((e.deltaY > 0 && canScrollDown) || (e.deltaY < 0 && canScrollUp)) {
+      // เลื่อนแนวตั้งในหน้านั้น
+      return;
+    }
+  }
+
+  // ถ้าไม่มีเนื้อหาแนวตั้งให้เลื่อนแล้ว -> เลื่อนสไลด์หน้าจอแนวนอน
+  if (e.deltaY !== 0) {
+    e.preventDefault();
+    mBox.scrollLeft += e.deltaY;
+  }
+}, { passive: false });
+
+// -------------------------------------------------------------
+// ระบบ Lightbox และ Modal ที่รองรับ Touch บน iOS Safari
+// -------------------------------------------------------------
+let currentModalImg = '';
+let currentModalTitle = '';
+
+function handleSmartImgError(el, filename, fallbackHtml) {
+  if (el && el.parentElement) {
+    el.parentElement.innerHTML = fallbackHtml;
+  }
+}
+
+function openCurrentInFullscreen() {
+  if (currentModalImg) {
+    openFullscreenImg(currentModalImg, currentModalTitle);
+  }
+}
+
+function openFullscreenImg(src, caption) {
+  const fs = document.getElementById('fsLightbox');
+  const img = document.getElementById('fsImg');
+  const cap = document.getElementById('fsCaption');
+  if (!fs || !img) return;
+  img.src = src;
+  img.alt = caption || '';
+  if (cap) cap.innerText = caption || '';
+  fs.classList.remove('hidden');
+  fs.classList.add('flex');
+  document.body.style.overflow = 'hidden'; // ล็อกการเลื่อนพื้นหลังบน iOS
+}
+
+function closeFsLightbox(e) {
+  if (e.target.id === 'fsLightbox' || e.target.id === 'fsImg') {
+    closeFsLightboxDirect();
+  }
+}
+
+function closeFsLightboxDirect() {
+  const fs = document.getElementById('fsLightbox');
+  if (fs) {
+    fs.classList.add('hidden');
+    fs.classList.remove('flex');
+    if (document.getElementById('mModal').classList.contains('hidden')) {
+      document.body.style.overflow = '';
+    }
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeFsLightboxDirect();
+    closePop();
+  }
+});
+
+function openToolPop(k) {
+  const item = toolsDB[k];
+  if (!item) return;
+  const m = document.getElementById('mModal');
+  if (!m) return;
+  document.getElementById('mTitle').innerText = item.title;
+  document.getElementById('mRole').innerText = item.cat;
+  document.getElementById('modalContent').innerHTML = `
+    <div>
+      <strong class="text-slate-900 block mb-1.5 text-sm font-semibold">📌 รูปแบบและวัตถุประสงค์การใช้งาน :</strong>
+      <p class="font-light leading-relaxed text-slate-600 text-xs md:text-sm">${item.usage}</p>
+    </div>
+  `;
+  const cover = item.coverImg || item.img;
+  currentModalImg = cover;
+  currentModalTitle = item.title;
+  
+  document.getElementById('mImg').innerHTML = `
+    <img src="${cover}" alt="${item.title}" class="max-w-full max-h-[50vh] sm:max-h-[65vh] object-contain rounded-xl shadow-md cursor-zoom-in hover:opacity-95 transition" 
+         style="max-height: 55vh; object-fit: contain;"
+         onclick="openFullscreenImg('${cover}', '${item.title}')"
+         title="คลิกเพื่อขยายดูภาพขนาดใหญ่เต็มหน้าจอ"
+         onerror="handleSmartImgError(this, '${cover}', '<div class=\'p-6 text-center text-slate-400 flex flex-col items-center justify-center h-full w-full bg-slate-50 rounded-xl\'><span class=\'text-3xl mb-1.5\'>📊</span><span class=\'font-semibold text-xs sm:text-sm text-slate-800\'>[ภาพเครื่องมือ: ${item.title}]</span><p class=\'text-xs text-slate-500 mt-1 font-light\'>${item.desc}</p><code class=\'text-[11px] text-emerald-600 bg-white px-2.5 py-1 rounded-lg border border-slate-200 font-mono mt-2 shadow-xs\'>${cover}</code></div>')"/>
+  `;
+  m.classList.remove('hidden');
+  m.classList.add('flex');
+  document.body.style.overflow = 'hidden';
+}
+
+function openWorkPop(id) {
+  const w = worksDB.find(item => item.id === id);
+  if (!w) return;
+  const m = document.getElementById('mModal');
+  if (!m) return;
+  document.getElementById('mTitle').innerText = w.title;
+  document.getElementById('mRole').innerText = w.roleTag;
+  document.getElementById('modalContent').innerHTML = `
+    <div class="space-y-3 text-xs md:text-sm">
+      <div>
+        <strong class="text-slate-900 block mb-1 font-semibold">รายละเอียดโครงการ:</strong>
+        <p class="font-light leading-relaxed text-slate-600">${w.desc}</p>
+      </div>
+      <div>
+        <strong class="text-slate-900 block mb-1 font-semibold">Project Scope:</strong>
+        <p class="font-light leading-relaxed text-slate-600">${w.scope}</p>
+      </div>
+    </div>
+  `;
+  const cover = w.coverImg || w.img;
+  currentModalImg = cover;
+  currentModalTitle = w.title;
+
+  document.getElementById('mImg').innerHTML = `
+    <img src="${cover}" alt="${w.title}" class="max-w-full max-h-[50vh] sm:max-h-[65vh] object-contain rounded-xl shadow-md cursor-zoom-in hover:opacity-95 transition" 
+         style="max-height: 55vh; object-fit: contain;"
+         onclick="openFullscreenImg('${cover}', '${w.title}')"
+         title="คลิกเพื่อขยายดูภาพขนาดใหญ่เต็มหน้าจอ"
+         onerror="handleSmartImgError(this, '${cover}', '<div class=\'p-6 text-center text-slate-400 flex flex-col items-center justify-center h-full w-full bg-slate-50 rounded-xl\'><span class=\'text-3xl mb-1.5\'>📑</span><span class=\'font-semibold text-xs sm:text-sm text-slate-800\'>${w.title}</span><p class=\'text-xs text-slate-500 mt-1 font-light\'>${w.desc}</p><code class=\'text-[11px] text-emerald-600 bg-white px-2.5 py-1 rounded-lg border border-slate-200 font-mono mt-2 shadow-xs\'>${cover}</code></div>')"/>
+  `;
+  m.classList.remove('hidden');
+  m.classList.add('flex');
+  document.body.style.overflow = 'hidden';
+}
+
+function closePop() {
+  const m = document.getElementById('mModal');
+  if (m) {
+    m.classList.add('hidden');
+    m.classList.remove('flex');
+    document.body.style.overflow = '';
+  }
+}
+</script>
+</body>
+</html>
